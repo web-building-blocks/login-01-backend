@@ -7,6 +7,19 @@ const router = express.Router();
 router.post("/signup", async (req: Request, res: Response): Promise<void> => {
     const { email, password } = req.body;
 
+    // ✅ 查询是否邮箱已存在
+    const { data: users, error: userError } = await supabase.auth.admin.listUsers();
+    if (userError) {
+        res.status(500).json({ error: "Failed to check existing users." });
+        return;
+    }
+
+    const exists = users.users.some((u) => u.email?.toLowerCase() === email.toLowerCase());
+    if (exists) {
+        res.status(400).json({ error: "Email already registered. Please log in instead." });
+        return;
+    }
+
     const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -31,6 +44,12 @@ router.post("/login", async (req: Request, res: Response): Promise<void> => {
 
     if (error) {
         res.status(400).json({ error: error.message });
+        return;
+    }
+
+    // ❗检查用户是否已验证邮箱
+    if (!data.user?.email_confirmed_at) {
+        res.status(400).json({ error: "Please verify your email before logging in." });
         return;
     }
 
