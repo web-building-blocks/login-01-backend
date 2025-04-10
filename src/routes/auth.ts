@@ -56,6 +56,7 @@ router.post("/login", async (req: Request, res: Response): Promise<void> => {
     res.status(200).json({
         message: "Login success",
         access_token: data.session?.access_token,
+        refresh_token: data.session?.refresh_token,
     });
 });
 
